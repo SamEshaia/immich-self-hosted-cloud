@@ -1,0 +1,26 @@
+# Secrets — never commit real credentials
+*.env
+.env
+*.key
+*.pem
+*.p12
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# Keep the example configs but ignore real ones
+configs/*.cfg
+configs/*.conf
+configs/*.json
+!configs/*.example
+!configs/*.example.*
+# Local-only working data — real credentials, never published
+raw/

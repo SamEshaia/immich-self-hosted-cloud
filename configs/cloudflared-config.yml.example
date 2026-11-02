@@ -1,0 +1,30 @@
+# Fallback Cloudflare tunnel config (kept on the Immich VM, service enabled)
+#
+# This is the pre-migration path, kept warm for one-DNS-edit rollback:
+#   photos-cf.<domain> (CF-proxied CNAME) → this tunnel → http://localhost:2283
+#
+# After the nginx/VPS migration, production DNS points at the VPS directly and
+# this path is only used if the VPS has a bad day:
+#   rollback = rename the DNS records back (see docs/upload-cap-migration.md)
+#
+# Note "protocol: http2": QUIC (the default) stalls when clients behind other
+# VPNs upload through this tunnel — double encapsulation + MTU interplay.
+# http2 makes this fallback usable for VPN'd users; costs nothing.
+#
+# /etc/cloudflared/config.yml on the Immich VM:
+
+tunnel: <TUNNEL_UUID>
+credentials-file: /etc/cloudflared/<TUNNEL_UUID>.json
+protocol: http2
+
+ingress:
+  - hostname: photos-cf.<your-domain>
+    service: http://localhost:2283
+  - service: http_status:404
+
+# Install as boot-persistent service (run once, as root):
+#   cloudflared service install
+# Then: sudo systemctl enable --now cloudflared
+#
+# DNS record for the tunnel (creates the CNAME, needs cert.pem first):
+#   cloudflared tunnel route dns <TUNNEL_UUID> photos-cf.<your-domain>

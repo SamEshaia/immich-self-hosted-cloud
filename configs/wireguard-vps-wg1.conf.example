@@ -1,0 +1,29 @@
+# VPS side of the dedicated Immich WireGuard tunnel (interface: wg1)
+#
+# This is a SECOND tunnel alongside the existing home↔VPS wg0 —
+# deliberately isolated so game/service traffic can never be affected.
+# Place at /etc/wireguard/wg1.conf on the VPS.
+#
+# The VM peer's PublicKey comes from the script in wg-vm-setup.sh.example.
+
+[Interface]
+Address = 10.66.71.1/24
+ListenPort = 51821
+MTU = 1420
+PrivateKey = <GENERATED_WITH_wg_genkey_ON_VPS>
+
+[Peer]
+# Immich VM
+PublicKey = <GENERATED_WITH_wg_genkey_ON_VM>
+# Only the tunnel's own address — NOT the VM's LAN subnet. The VPS only
+# ever talks to the VM over the tunnel; no LAN routing needed here.
+AllowedIPs = 10.66.71.2/32
+
+# No PersistentKeepalive on the VPS side: the VM dials out (it's behind
+# NAT) and keeps the mapping alive from its side.
+
+# Enable:
+#   systemctl enable --now wg-quick@wg1
+#
+# Verify without touching the main tunnel:
+#   wg show wg0 ; wg show wg1 ; ping -c3 10.66.71.2

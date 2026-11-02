@@ -1,0 +1,44 @@
+#!/bin/bash
+# One-shot VM-side setup for the dedicated Immich WireGuard tunnel (wg1)
+#
+# Generate the three <REPLACE_ME> values first (keypairs generated on the VPS):
+#   <VM_PRIVATE_KEY>  — wg genkey | tee vm-private.key  (run on VM or VPS, then embed)
+#   <VPS_PUBLIC_KEY>  — corresponding VPS-side wg1 public key
+#
+# Run on the Immich VM: sudo bash wg-vm-setup.sh
+# Safe to re-run: aborts if /etc/wireguard/wg1.conf already exists.
+#
+# IMPORTANT: embed keys with single quotes and mind shell quoting — this
+# script builds the config with double quotes around interpolated values.
+set -euo pipefail
+export DEBIAN_FRONTEND=noninteractive
+
+apt-get update -qq
+apt-get install -y -qq wireguard-tools
+
+# Never clobber an existing tunnel
+if [ -f /etc/wireguard/wg1.conf ]; then echo ABORT-conf-exists; exit 1; fi
+
+printf '%s\n' \
+  '[Interface]' \
+  'Address = 10.66.71.2/24' \
+  'MTU = 1420' \
+  "PrivateKey = <VM_PRIVATE_KEY>" \
+  '' \
+  '[Peer]' \
+  "PublicKey = <VPS_PUBLIC_KEY>" \
+  'Endpoint = <VPS_PUBLIC_IP>:51821' \
+  'AllowedIPs = 10.66.71.0/24' \
+  'PersistentKeepalive = 25' > /etc/wireguard/wg1.conf
+
+chmod 600 /etc/wireguard/wg1.conf
+systemctl enable --now wg-quick@wg1
+sleep 2
+wg show wg1
+
+# Immich must trust the VPS (tunnel peer) so client IPs survive the proxy hop
+grep -q 'IMMICH_TRUSTED_PROXIES' /home/<user>/immich/.env \
+  || echo 'IMMICH_TRUSTED_PROXIES=10.66.71.1' >> /home/<user>/immich/.env
+cd /home/<user>/immich && docker compose up -d
+
+echo WG_VM_SETUP_DONE
