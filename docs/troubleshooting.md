@@ -1,6 +1,6 @@
 # Troubleshooting
 
-Real failures from this deployment, with fixes. The interesting ones are transport-level, not Immich-level — that's where this stack differs from a stock install.
+Real failures from this deployment, with the actual fixes.
 
 ## Uploads fail through the Cloudflare tunnel: two distinct causes
 

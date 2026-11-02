@@ -11,9 +11,9 @@
 
 The home WAN IP is never in DNS for this service. Scanners hit the VPS and see nginx. This matches the preexisting pattern: the game-server tunnel uses the same VPS-as-public-face design.
 
-## Exposure accepted, knowingly
+## Accepted exposure
 
-- **No DDoS shield.** Leaving Cloudflare's proxy removed CF's edge mitigation on this hostname. A targeted flood can take the VPS down. Judged acceptable for a photo service; the rollback record makes restoring CF-fronting trivial if threat conditions change.
+- **No DDoS shield.** Leaving Cloudflare's proxy removed CF's edge mitigation on this hostname — a targeted flood can take the VPS down. Acceptable for a photo service; rollback makes restoring CF-fronting trivial.
 - **Public account creation on Immich.** Out of the box, anyone reaching the URL can register an account. Mitigations: disable public registration, or front it with an auth provider. Planned: OAuth via Authentik/Pocket ID (also protects share links); Immich's native passkey support is an interim option.
 
 ## Hardening done

@@ -93,4 +93,4 @@ Then the acceptance test that matters: upload a **>100MB video from a phone on c
 
 ## 7. Mobile app
 
-One URL for everything: `https://photos.<domain>`. Background backup enabled in-app. Traveling users need no VPN, no per-network config — the single public URL is the point of this design.
+One URL for everything: `https://photos.<domain>`. Background backup enabled in-app. Traveling users need no VPN and no per-network config.

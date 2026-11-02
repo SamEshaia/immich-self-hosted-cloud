@@ -1,7 +1,5 @@
 # Upload-Cap Migration: Cloudflare Tunnel → nginx VPS over WireGuard
 
-The war story this repo exists for.
-
 ## The problem: a hard 100MB cap, not a bug
 
 Immich's mobile app uploads each asset as **one HTTP request**. Cloudflare's Free/Pro plans hard-cap any proxied request body at 100MB, enforced at the edge — a 200MB home video gets rejected as 413 before it ever reaches the origin server, producing a bare "Error" in the app with nothing in any server log. Config on the origin cannot fix it (Business plan or bust), and family members using phones won't split videos.
@@ -40,11 +38,11 @@ Two separate failure modes were found and fixed along the way — worth knowing 
 
 1. Build `wg1` VPS↔VM, verify `curl http://10.66.71.2:2283` inside the tunnel
 2. Add the nginx vhost on port 80 (with the ACME block — see [troubleshooting](troubleshooting.md)), reload
-3. **The user's one dashboard step:** rename the CF-proxied CNAME `photos` → `photos-cf` (kept proxied = instant rollback record), add `A photos → <VPS_IP>` **DNS-only (grey cloud)**
+3. **One dashboard step:** rename the CF-proxied CNAME `photos` → `photos-cf` (kept proxied = instant rollback record), add `A photos → <vps_public_ip>` **DNS-only (grey cloud)**
 4. `certbot --nginx -d photos.<domain>` after the DNS flip (LE validates against the new record)
 5. Verify, then run the >100MB cellular test
 
-**Critical gotcha:** after step 3, uploads were *still* capping — because the new A record was **left orange-clouded**. A proxied A record re-enters Cloudflare's edge and the cap applies all over again. The tell was in the nginx access logs: client IPs were CF edge addresses (`104.22.x.x`) instead of real client IPs. Fix: set the record to **DNS only**. After that, all uploads — including 381MB videos from two different user accounts — landed, verified server-side.
+**Gotcha:** after step 3, uploads were *still* capping — the new A record was **left orange-clouded**. A proxied A record re-enters Cloudflare's edge and the cap applies all over again. The tell was in the nginx access logs: client IPs were CF edge addresses (`104.22.x.x`) instead of real client IPs. Fix: set the record to **DNS only**. After that, all uploads landed, including 381MB videos from two accounts.
 
 ## Rollback drill
 
@@ -52,9 +50,9 @@ The CF tunnel still runs (`cloudflared.service`, enabled, `protocol: http2`) and
 
 ## What changed in app behavior
 
-Nothing. Same URL, same tokens, no re-login. Session validity doesn't depend on what sits behind the hostname. Latency shifts from CF-edge-POP-near-you to one fixed VPS (a small regression for far-from-VPS users; uploads don't care). The cap is gone — which was the entire point.
+Nothing. Same URL, same tokens, no re-login. Latency shifts from the nearest CF edge POP to one fixed VPS; uploads don't care. The cap is gone.
 
-## Honest trade-offs
+## Trade-offs
 
 - **CF's DDoS shield is lost on this hostname.** A targeted flood can take down the VPS; CF would have absorbed it. Accepted: the threat model is port scanners and bots, not sustained attacks.
 - **ISP bandwidth cost at home:** WAN-in traffic arrives via VPS → tunnel. Trivial for photo volumes; noted for completeness. (A pfSense DNS host-override → LAN IP for home clients is the optional escape hatch, without changing the URL.)

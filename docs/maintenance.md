@@ -2,7 +2,7 @@
 
 ## Immich upgrade discipline (read before every `docker compose pull`)
 
-Immich occasionally ships **database-breaking releases**, and the Postgres vector extension images must move in lockstep with the app — this is the one mistake that corrupts a photo library. The rules:
+Immich occasionally ships **database-breaking releases**, and the Postgres vector extension images must move in lockstep with the app — a mixed pull across releases corrupts the database. The rules:
 
 1. Never pin `IMMICH_VERSION` across a major version jump without reading the release notes for the target version first
 2. The postgres container (`postgres:14-vectorchord…-pgvectors…`) must be the one referenced by the release notes for that Immich version — compose files from the same release are pulled together, never mixed across releases
@@ -46,4 +46,4 @@ curl -sI https://photos.<domain> | head -3            # 200 + server: nginx
 
 ## Storage outlook
 
-The VM disk is a 600G LV carved from a RAID6 pool that had ~933G free at deployment — expansion path is `lvextend` on the host LV + `growpart`/`resize2fs` in-guest — the same `lvextend`/`growpart` procedure as any LVM-backed guest. Watch `/srv/immich` growth monthly; the first 1,000 assets ran ~1.9G before originals-only dedupe habits set in.
+The VM disk is a 600G LV carved from a RAID6 pool with ~933G free at deployment. Expansion is `lvextend` on the host + `growpart`/`resize2fs` in-guest. Watch `/srv/immich` growth monthly; the first 1,000 assets ran ~1.9G.
