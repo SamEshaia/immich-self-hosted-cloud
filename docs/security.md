@@ -18,7 +18,7 @@ The home WAN IP is never in DNS for this service. Scanners hit the VPS and see n
 
 ## Hardening done
 
-- Key-only SSH everywhere (root or sladmin); passwords never travel
+- Key-only SSH everywhere (root or `<user>`); passwords never travel
 - WireGuard: private keys 600-perms, `AllowedIPs` pinned to exact tunnel addresses (`/32` on the VPS peer), keepalive so only the *inside* host dials — the VPS never needs to initiate into the home network, and no WAN listener exists at home
 - `IMMICH_TRUSTED_PROXIES=10.66.71.1` — Immich trusts exactly the tunnel peer, so client IPs and rate limits are real, not spoofed
 - Secrets hygiene in this repo: every committed config is an `.example` with placeholders; `.gitignore` blocks `*.env`, `*.key`, `*.pem`, real `configs/*.conf` — mirrors the pattern from the dayz repo

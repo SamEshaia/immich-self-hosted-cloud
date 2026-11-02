@@ -4,7 +4,7 @@ Real values from the production deployment; placeholders in `<angle brackets>` f
 
 ## 1. VM disk: repurpose a retired VM's logical volume
 
-The 600G LV belonged to a retired VM (`sl-srv-dc1`, confusingly named `Plex`). After a read-only loop-device mount confirmed nothing valuable inside:
+The 600G LV belonged to a retired VM (confusingly named `Plex`). After a read-only loop-device mount confirmed nothing valuable inside:
 
 ```bash
 # On the KVM host — read-only peek first
@@ -15,8 +15,8 @@ sudo mount -o ro "${LOOPDEV}p2" /mnt/plex-check && ls -la /mnt/plex-check
 sudo umount /mnt/plex-check && sudo losetup -d "$LOOPDEV"
 
 # Retire the VM, keep its disk
-sudo virsh dumpxml sl-srv-dc1 > ~/sl-srv-dc1-xml-backup.xml
-sudo virsh undefine sl-srv-dc1 --nvram
+sudo virsh dumpxml <old-vm> > ~/old-vm-xml-backup.xml
+sudo virsh undefine <old-vm> --nvram
 sudo lvrename /dev/ubuntu-vg/Plex /dev/ubuntu-vg/immich-disk
 ```
 
@@ -27,7 +27,7 @@ sudo lvrename /dev/ubuntu-vg/Plex /dev/ubuntu-vg/immich-disk
 ## 2. Create the VM
 
 ```bash
-sudo virt-install --name sl-srv-immich --memory 16384 --vcpus 8 \
+sudo virt-install --name <vm-name> --memory 16384 --vcpus 8 \
   --disk path=/dev/ubuntu-vg/immich-disk,bus=virtio,format=raw \
   --cdrom=/var/lib/libvirt/images/ubuntu-24.04.2-live-server-amd64.iso \
   --os-variant ubuntu24.04 --network bridge=bridge1 --graphics spice
@@ -35,7 +35,7 @@ sudo virt-install --name sl-srv-immich --memory 16384 --vcpus 8 \
 
 Headless host: virt-viewer won't launch without a DISPLAY — install `cockpit-machines` on the host and use the browser console at `:9090` instead. Ubuntu installer: DHCP, **Use entire disk**, install OpenSSH. Then resize the LVM root inside the guest from the 100G default to the full ~598G (Storage screen → edit ubuntu-lv → max) **before** confirming — or do it later with `lvextend -l +100%FREE /dev/ubuntu-vg/ubuntu-lv && growpart /dev/vda 3 && resize2fs /dev/mapper/ubuntu--vg-ubuntu--lv`.
 
-After first boot, eject the ISO on the host (`sudo virsh change-media sl-srv-immich <cdrom-target> --eject`), install the guest agent in-guest so the host can see its filesystems (`virsh domfsinfo`), and pin the IP via DHCP reservation.
+After first boot, eject the ISO on the host (`sudo virsh change-media <vm-name> <cdrom-target> --eject`), install the guest agent in-guest so the host can see its filesystems (`virsh domfsinfo`), and pin the IP via DHCP reservation.
 
 ## 3. Immich stack
 
